@@ -1,10 +1,10 @@
-FROM node:18-buster
+FROM node:22-bookworm
 
 ENV PATH="/root/.rbenv/shims:${PATH}"
 
 # Install dependencies
 RUN apt-get update \
-    && apt-get -y install sudo jq rbenv \
+    && apt-get -y install sudo jq rbenv curl \
     && mkdir -p "$(rbenv root)"/plugins \
     && git clone https://github.com/rbenv/ruby-build.git "$(rbenv root)"/plugins/ruby-build \
     && git -C "$(rbenv root)"/plugins/ruby-build pull \
@@ -12,8 +12,9 @@ RUN apt-get update \
     && rbenv global 3.2.0
 
 # Install latest chrome stable package.
-RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
-RUN sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list'
+RUN mkdir -p /etc/apt/keyrings \
+    && curl -fsSL https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /etc/apt/keyrings/google-chrome.gpg \
+    && echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list
 RUN apt-get update \
     && apt-get install -y google-chrome-stable --no-install-recommends \
     && apt-get clean
